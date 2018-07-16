@@ -59,7 +59,7 @@ void ASWeapon::Fire()
 			TracerEndPoint = Hit.ImpactPoint;
 			
 		}
-		DrawDebugLine(GetWorld(),EyeLocation,TraceEnd,FColor::Red,false,1.f,0,1.f);
+		DrawDebugLine(GetWorld(),EyeLocation,TraceEnd,FColor::Red,false,1.f,0,0.1f);
 		if (MuzzleEffect) 
 		{
 			UGameplayStatics::SpawnEmitterAttached(MuzzleEffect, MeshComp, MuzzleSocketName);
