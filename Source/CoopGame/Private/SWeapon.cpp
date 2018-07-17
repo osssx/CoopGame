@@ -24,8 +24,14 @@ ASWeapon::ASWeapon()
 	MuzzleSocketName = "MuzzleSocket";
 	TracerTagetName = "Target";
 	BaseDamage = 20.f;
+	FireRate = 600;
 }
 
+void ASWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	TimeBetweenShot = 60 / FireRate;
+}
 
 void ASWeapon::Fire()
 {
@@ -90,11 +96,25 @@ void ASWeapon::Fire()
 		
 		
 		PlayFireEffect(TracerEndPoint);
-		
+		LastFireTime = GetWorld()->TimeSeconds;
 	}
 
 	
 }
+
+void ASWeapon::StartFire()
+{
+	float FirstDelay = FMath::Max(LastFireTime + TimeBetweenShot - GetWorld()->TimeSeconds,0.0f);
+	GetWorldTimerManager().SetTimer(TimerHandle_TimeBetweenShot, this,&ASWeapon::Fire,TimeBetweenShot, true,FirstDelay);
+
+}
+
+void ASWeapon::StopFire()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_TimeBetweenShot);
+}
+
+
 
 void ASWeapon::PlayFireEffect(FVector TraceEnd)
 {

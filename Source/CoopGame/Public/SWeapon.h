@@ -20,6 +20,7 @@ public:
 	ASWeapon();
 
 protected:
+	virtual void BeginPlay() override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* MeshComp;
@@ -53,9 +54,20 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	float BaseDamage;
 
-public:	
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	virtual void Fire();
-	
-	
+
+	FTimerHandle TimerHandle_TimeBetweenShot;
+
+	float LastFireTime;
+
+	//RPM - Bullets per minute fired 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float FireRate;
+
+	float TimeBetweenShot;
+public:	
+		
+	void StartFire();
+
+	void StopFire();
 };
