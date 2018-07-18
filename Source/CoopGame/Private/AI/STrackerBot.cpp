@@ -6,6 +6,7 @@
 #include "AI/Navigation/NavigationSystem.h"
 #include "GameFramework/Character.h"
 #include "AI/Navigation/NavigationPath.h"
+#include "DrawDebugHelpers.h"
 
 
 // Sets default values
@@ -15,14 +16,23 @@ ASTrackerBot::ASTrackerBot()
 	PrimaryActorTick.bCanEverTick = true;
 	MeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeshComp"));
 	MeshComp->SetCanEverAffectNavigation(false);
+	MeshComp->SetSimulatePhysics(true);
 	RootComponent = MeshComp;
+
 	
+	bUseVelcityChange = false;
+
+	MovementForce = 1000;
+
+	RequiredDistanceToTarget = 100;
 }
 
 // Called when the game starts or when spawned
 void ASTrackerBot::BeginPlay()
 {
 	Super::BeginPlay();
+
+	NextPathPoint = GetNextPathPoint();
 	
 }
 
@@ -41,7 +51,20 @@ FVector ASTrackerBot::GetNextPathPoint()
 void ASTrackerBot::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	float DistanceToTarget = (GetActorLocation() - NextPathPoint).Size();
+	if (DistanceToTarget <= RequiredDistanceToTarget) 
+	{
+		NextPathPoint = GetNextPathPoint();
+	}
+	else 
+	{
+		FVector ForceDir = NextPathPoint - GetActorLocation();
+		ForceDir.Normalize();
+		ForceDir *= MovementForce;
+		MeshComp->AddForce(ForceDir, NAME_None, bUseVelcityChange);
+		DrawDebugDirectionalArrow(GetWorld(), GetActorLocation(), GetActorLocation()+ForceDir, 20, FColor::Red, false,0, 0, 1);
+	}
+	DrawDebugSphere(GetWorld(), NextPathPoint, 30, 16, FColor::Yellow, false, 0, 0, 1);
 }
 
 
