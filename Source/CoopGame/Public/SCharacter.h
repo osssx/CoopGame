@@ -55,6 +55,7 @@ protected:
 
 	void EndZoom();
 
+	UPROPERTY(Replicated)
 	ASWeapon* CurrentWeapon;
 
 	void StartFire();
