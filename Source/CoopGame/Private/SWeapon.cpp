@@ -82,7 +82,7 @@ void ASWeapon::Fire()
 			PlayImpactEffect(SurfaceType, Hit.ImpactPoint);
 
 			TracerEndPoint = Hit.ImpactPoint;
-			
+			HitScanTrace.SurfaceType = SurfaceType;
 			
 		}
 
