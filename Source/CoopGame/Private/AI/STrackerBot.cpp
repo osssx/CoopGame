@@ -8,6 +8,9 @@
 #include "AI/Navigation/NavigationPath.h"
 #include "DrawDebugHelpers.h"
 #include "Components/SHealthComponent.h"
+#include "SCharacter.h"
+#include "Components/SphereComponent.h"
+#include "Sound/SoundCue.h"
 
 
 // Sets default values
@@ -23,12 +26,20 @@ ASTrackerBot::ASTrackerBot()
 	HealthComp = CreateDefaultSubobject<USHealthComponent>(TEXT("HealthComp"));
 	HealthComp->OnHealthChanged.AddDynamic(this, &ASTrackerBot::HandleTakeDamage);
 
+	SphereComp = CreateDefaultSubobject<USphereComponent>(TEXT("SphereComp"));
+	SphereComp->SetSphereRadius(200);
+	SphereComp->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	SphereComp->SetCollisionResponseToAllChannels(ECR_Ignore);
+	SphereComp->SetCollisionResponseToChannel(ECC_Pawn,ECR_Overlap);
+	SphereComp->SetupAttachment(RootComponent);
+
 	bUseVelcityChange = false;
 	MovementForce = 1000;
 	RequiredDistanceToTarget = 100;
 
 	ExplosionRadius = 200;
 	ExplosionDamage = 60;
+	SelfDamageInterval = .25f;
 }
 
 // Called when the game starts or when spawned
@@ -82,12 +93,19 @@ void ASTrackerBot::SelfDestruct()
 	{
 		UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ExplosionEffect, GetActorLocation());
 	}
+	UGameplayStatics::PlaySoundAtLocation(this, ExploedSound, GetActorLocation());
 	TArray<AActor*> IgnoredActors;
 	IgnoredActors.Add(this);
 	UGameplayStatics::ApplyRadialDamage(this, ExplosionDamage, GetActorLocation(), ExplosionRadius, nullptr, IgnoredActors, this,GetInstigatorController(),true);
 	Destroy();
 
 	DrawDebugSphere(GetWorld(), GetActorLocation(), ExplosionRadius, 16, FColor::Red, false, 2.f, 0, 1.f);
+}
+
+
+void ASTrackerBot::DamageSelf()
+{
+	UGameplayStatics::ApplyDamage(this, 20, GetInstigatorController(), this, nullptr);
 }
 
 // Called every frame
@@ -110,5 +128,18 @@ void ASTrackerBot::Tick(float DeltaTime)
 	DrawDebugSphere(GetWorld(), NextPathPoint, 30, 16, FColor::Yellow, false, 0, 0, 1);
 }
 
+void ASTrackerBot::NotifyActorBeginOverlap(AActor* OtherActor)
+{
+	if (!bStartSelfDestruction) {
+		ASCharacter* PlayerPawn = Cast<ASCharacter>(OtherActor);
+		if (PlayerPawn)
+		{
+			GetWorldTimerManager().SetTimer(TimeHandle_SelfDamage, this, &ASTrackerBot::DamageSelf, SelfDamageInterval, true, 0.f);
+			bStartSelfDestruction = true;
+			UGameplayStatics::SpawnSoundAttached(SelfDestructSound, RootComponent);
+		}
+	}
+	
+}
 
 
